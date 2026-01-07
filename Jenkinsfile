@@ -1,14 +1,13 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:25-alpine3.22'
+            reuseNode true
+        }
+    }
 
     stages {
         stage('Build') {
-            agent {
-                docker {
-                    image 'node:25-alpine3.22'
-                    reuseNode true
-                }
-            }
             steps {
                 sh '''
                     ls -la
@@ -16,8 +15,15 @@ pipeline {
                     npm --version
                     npm ci
                     npm run build
-                    ls -la
                 '''
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Testing the jenkins app'
+                // This will run the "test" script defined in your package.json
+                sh 'npm test' 
             }
         }
     }
