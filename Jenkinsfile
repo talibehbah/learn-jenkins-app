@@ -25,7 +25,7 @@ pipeline {
                 
                 // 2. Verify the build artifact exists
                 echo 'Verifying build artifacts...'
-                sh 'ls -la build/index.html'
+                sh 'test -f build/index.html'
             }
         }
     }
