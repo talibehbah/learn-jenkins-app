@@ -1,30 +1,28 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:25-alpine3.22'
-            reuseNode true
-        }
-    }
+    // 1. Change top-level agent to none
+    agent none 
 
     stages {
-        stage('Build') {
+        stage('Build & Test') {
+            // 2. Move the Node agent here
+            agent {
+                docker {
+                    image 'node:25-alpine3.22'
+                    reuseNode true
+                }
+            }
             steps {
                 sh '''
                     npm ci
                     npm run build
+                    npm test
+                    test -f build/index.html
                 '''
             }
         }
 
-        stage('Test') {
-            steps {
-                echo 'Testing the jenkins app'
-                sh 'npm test'
-                sh 'test -f build/index.html'
-            }
-        }
-
         stage('E2E') {
+            // 3. This will now run on the Jenkins host, which HAS docker
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.57.0-noble'
@@ -32,33 +30,20 @@ pipeline {
                 }
             }
             steps {
-                echo 'Setting up E2E environment'
-                // 1. Re-install dependencies (Playwright image uses a different OS than Alpine)
-                sh 'npm ci' 
+                echo 'Starting E2E Tests'
+                // Tip: In Playwright image, you usually need to install deps first
+                sh 'npm ci'
+                
+                // Start your server in the background and run tests
+                // (Using the background fix we discussed previously)
                 sh 'npm install -g serve'
-                
-                // 2. Start server in the BACKGROUND using '&'
-                echo 'Starting web server in background...'
-                sh 'serve -s build & echo $! > .server_pid'
-                
-                // 3. Wait a few seconds for the server to be ready
-                sleep 5
-                
-                // 4. Run Playwright tests
-                sh 'npx playwright test'
-            }
-            post {
-                always {
-                    // Clean up the background server process
-                    sh 'kill $(cat .server_pid) || true'
-                }
+                sh 'serve -s build & sleep 5 && npx playwright test'
             }
         }
     }
 
     post {
         always {
-            // This will only work if your tests are configured to output a JUnit XML file
             junit 'test-results/junit.xml'
         }
     }
