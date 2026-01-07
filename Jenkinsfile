@@ -10,9 +10,6 @@ pipeline {
         stage('Build') {
             steps {
                 sh '''
-                    ls -la
-                    node --version
-                    npm --version
                     npm ci
                     npm run build
                 '''
@@ -22,8 +19,13 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Testing the jenkins app'
-                // This will run the "test" script defined in your package.json
-                sh 'npm test' 
+                
+                // 1. Run the existing npm tests
+                sh 'npm test'
+                
+                // 2. Verify the build artifact exists
+                echo 'Verifying build artifacts...'
+                sh 'ls -la build/index.html'
             }
         }
     }
