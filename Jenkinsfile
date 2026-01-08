@@ -43,7 +43,7 @@ pipeline {
             }
             post {
                 always {
-                    // Record Playwright results (usually in playwright-report or junit)
+                    // Record Playwright results (usually in playwright-report or junit) 
                     junit 'test-results/**/*.xml'
                 }
             }
