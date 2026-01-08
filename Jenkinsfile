@@ -48,7 +48,7 @@ pipeline {
                     sleep 5
 
                     # Run Playwright tests
-                    npx playwright test || true
+                    npx playwright test --reporter=html
                 '''
             }
             post {
