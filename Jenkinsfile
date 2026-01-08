@@ -36,14 +36,14 @@ pipeline {
             steps {
                 echo 'Starting E2E Tests'
                 sh 'npm ci'
-                
-                # Use 'npx serve' instead of 'npm install -g' to avoid permission errors
-                # Use '&' to run in background and 'sleep' to wait for startup
+
+                // Use 'npx serve' instead of 'npm install -g' to avoid permission errors
+                // Use '&' to run in background and 'sleep' to wait for startup
                 sh 'npx serve -s build & sleep 5 && npx playwright test'
             }
             post {
                 always {
-                    // Record Playwright results (usually in playwright-report or junit) 
+                    // Record Playwright results (usually in playwright-report or junit)
                     junit 'test-results/**/*.xml'
                 }
             }
