@@ -1,59 +1,74 @@
 pipeline {
-    agent none 
+    agent any
 
     stages {
-        stage('Build & Test') {
+        /*
+
+        stage('Build') {
             agent {
                 docker {
-                    image 'node:25-alpine3.22'
+                    image 'node:18-alpine'
                     reuseNode true
                 }
             }
             steps {
                 sh '''
+                    ls -la
+                    node --version
+                    npm --version
                     npm ci
                     npm run build
-
-                    # Run tests in CI mode (no watchers)
-                    CI=true npm test -- --watchAll=false || true
-
-                    # Ensure build output exists
-                    test -f build/index.html
+                    ls -la
                 '''
-            }
-            post {
-                always {
-                    echo 'Build & Test stage completed'
-                }
             }
         }
+        */
 
-        stage('E2E') {
-            agent {
-                docker {
-                    image 'mcr.microsoft.com/playwright:v1.57.0-noble'
-                    reuseNode true
+        stage('Tests') {
+            parallel {
+                stage('Unit tests') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            reuseNode true
+                        }
+                    }
+
+                    steps {
+                        sh '''
+                            #test -f build/index.html
+                            npm test
+                        '''
+                    }
+                    post {
+                        always {
+                            junit 'jest-results/junit.xml'
+                        }
+                    }
                 }
-            }
-            steps {
-                echo 'Starting E2E Tests'
 
-                sh '''
-                    npm ci
+                stage('E2E') {
+                    agent {
+                        docker {
+                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                            reuseNode true
+                        }
+                    }
 
-                    # Serve React build in background
-                    npx serve -s build &
+                    steps {
+                        sh '''
+                            npm install serve
+                            node_modules/.bin/serve -s build &
+                            sleep 10
+                            npx playwright test  --reporter=html
+                        '''
+                    }
 
-                    # Wait for server
-                    sleep 5
-
-                    # Run Playwright tests
-                    npx playwright test --reporter=html
-                '''
-            }
-            post {
-                always {
-                    echo 'E2E stage completed'
+                    post {
+                        always {
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+                        }
+                    }
                 }
             }
         }
