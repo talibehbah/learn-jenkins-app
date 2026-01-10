@@ -92,7 +92,7 @@ pipeline {
                     node_modules/.bin/netlify --version
                     node_modules/.bin/netlify status
 
-                    echo "Deploying pre-built app to Netlify..."
+                    echo "Deploying pre-built production app to Netlify..."
                     node_modules/.bin/netlify deploy \
                         --dir=build \
                         --prod \
