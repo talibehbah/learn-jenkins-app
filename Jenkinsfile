@@ -1,8 +1,8 @@
 pipeline {
     agent any
 
-    environment{
-        NETLIFY_SITE_ID = 'a6467595-96f7-4622-a270-51d19c9bfddc'
+    environment {
+        NETLIFY_SITE_ID    = 'a6467595-96f7-4622-a270-51d19c9bfddc'
         NETLIFY_AUTH_TOKEN = credentials('netlify-token')
     }
 
@@ -17,18 +17,17 @@ pipeline {
             }
             steps {
                 sh '''
-                    ls -la
                     node --version
                     npm --version
                     npm ci
                     npm run build
-                    ls -la
                 '''
             }
         }
 
         stage('Tests') {
             parallel {
+
                 stage('Unit tests') {
                     agent {
                         docker {
@@ -38,12 +37,11 @@ pipeline {
                     }
                     steps {
                         sh '''
-                            npm test
+                            npm test -- --watchAll=false
                         '''
                     }
                     post {
                         always {
-                            // ✅ FIX: correct CRA + jest-junit output location
                             junit 'test-results/junit.xml'
                         }
                     }
@@ -68,14 +66,11 @@ pipeline {
                         always {
                             publishHTML([
                                 allowMissing: false,
-                                alwaysLinkToLastBuild: false,
-                                icon: '',
-                                keepAll: false,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
                                 reportDir: 'playwright-report',
                                 reportFiles: 'index.html',
-                                reportName: 'Playwright HTML Report',
-                                reportTitles: '',
-                                useWrapperFileDirectly: true
+                                reportName: 'Playwright HTML Report'
                             ])
                         }
                     }
@@ -93,10 +88,15 @@ pipeline {
             steps {
                 sh '''
                     npm install netlify-cli
+
                     node_modules/.bin/netlify --version
-                    echo "Deploying to production with Site ID: $NETLIFY_SITE_ID"
                     node_modules/.bin/netlify status
-                    node_modules/.bin/netlify deploy --dir=build --prod
+
+                    echo "Deploying pre-built app to Netlify..."
+                    node_modules/.bin/netlify deploy \
+                        --dir=build \
+                        --prod \
+                        --no-build
                 '''
             }
         }
