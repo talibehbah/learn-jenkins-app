@@ -4,7 +4,7 @@ import './App.css';
 
 function App() {
   const [studentCount, setStudentCount] = useState(45000);
-  const [courseRating, setCourseRating] = useState(4.7);
+  const courseRating = 4.7; // Changed from state to constant
   const [expanded, setExpanded] = useState(false);
 
   // Mock API call effect
