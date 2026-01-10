@@ -77,9 +77,14 @@ pipeline {
                 }
             }
         }
+
         stage('Approval') {
+            // No Docker agent needed for approval
+            agent none
             steps {
-                input message: 'Ready to deploy?', ok: 'Yes, I want to deploy!'
+                script {
+                    input message: 'Ready to deploy?', ok: 'Yes, I want to deploy!'
+                }
             }
         }
 
